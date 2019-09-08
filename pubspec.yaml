@@ -1,8 +1,8 @@
 name: auto_localization
-description: A new Flutter package.
+description: A way to automatically translate all your app to the phone Localization.
 version: 0.0.1
-author:
-homepage:
+author: Matteo Sipione<matteo@sipio.it>
+homepage: https://github.com/Sipioteo/auto_localization
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
@@ -16,6 +16,7 @@ dependencies:
   translator: ^0.1.2
 
   sqflite: ^1.1.6
+  synchronized: ^2.1.0+1
 
 dev_dependencies:
   flutter_test:

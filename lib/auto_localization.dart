@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:devicelocale/devicelocale.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:synchronized/synchronized.dart';
 import 'package:translator/translator.dart';
 
 
@@ -31,41 +32,51 @@ class _DatabaseManager{
     );
   }
 
+
+
+  var lock = new Lock();
+
   GoogleTranslator translator;
   Future<String> getTranslation(String from, String locale) async {
-    var test=(await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans='"+from+"' LIMIT 1) AND Lang='"+locale+"'"));
 
-    String to= test.isNotEmpty?test[0]["Trans"]:null;
-    if(to==null){
-      to=await translator.translate(from, to: locale);
-      try{
-        db.insert("Translation", {
-          "idTranslate":(await db.rawQuery("SELECT COUNT(*) as Conto FROM Translation"))[0]["Conto"],
-          "Lang":"NAN",
-          "Trans":from,
-        });
-      }catch(e){
+
+    String a=await lock.synchronized(() async {
+
+      var test=(await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans='"+from+"' LIMIT 1) AND Lang='"+locale+"'"));
+      String to= test.isNotEmpty?test[0]["Trans"]:null;
+      if(to==null){
+        to=await translator.translate(from, to: locale);
+        try{
+          db.insert("Translation", {
+            "idTranslate":(await db.rawQuery("SELECT COUNT(*) as Conto FROM Translation"))[0]["Conto"],
+            "Lang":"NAN",
+            "Trans":from,
+          });
+        }catch(e){
+
+        }
+        try{
+          db.insert("Translation", {
+            "idTranslate":(await db.rawQuery("SELECT idTranslate FROM Translation WHERE Trans='"+from+"' AND Lang='NAN'"))[0]["idTranslate"],
+            "Lang":locale,
+            "Trans":to,
+          });
+        }catch(e){
+
+        }
+        try{
+          db.update("Translation", {
+            "Lang":locale,
+          }, where: "Trans='"+to+"' AND Lang='NAN'");
+        }catch(e){
+
+        }
 
       }
-      try{
-        db.insert("Translation", {
-          "idTranslate":(await db.rawQuery("SELECT idTranslate FROM Translation WHERE Trans='"+from+"' AND Lang='NAN'"))[0]["idTranslate"],
-          "Lang":locale,
-          "Trans":to,
-        });
-      }catch(e){
+      return to;
+    });
 
-      }
-      try{
-        db.update("Translation", {
-          "Lang":locale,
-        }, where: "Trans='"+to+"' AND Lang='NAN'");
-      }catch(e){
-
-      }
-
-    }
-    return to;
+    return a;
 
   }
 
