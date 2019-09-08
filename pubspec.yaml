@@ -1,6 +1,6 @@
 name: auto_localization
 description: A way to automatically translate all your app to the phone Localization.
-version: 0.0.2
+version: 0.0.3
 author: Matteo Sipione<matteo@sipio.it>
 homepage: https://github.com/Sipioteo/auto_localization
 
