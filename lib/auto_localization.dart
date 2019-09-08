@@ -7,7 +7,8 @@ import 'package:synchronized/synchronized.dart';
 import 'package:translator/translator.dart';
 
 
-class _DatabaseManager{
+
+class _DatabaseManager {
 
 
   static final _DatabaseManager _singleton = new _DatabaseManager._internal();
@@ -23,67 +24,69 @@ class _DatabaseManager{
 
 
   initDatabase() async {
-
     translator = new GoogleTranslator();
+    deleteDatabase('translation.db');
+
     db = await openDatabase('translation.db', version: 1,
         onCreate: (Database db, int version) async {
-          await db.execute('CREATE TABLE `Translation` (`idTranslate` integer,`Lang` text,`Trans` text,  PRIMARY KEY (Trans))');
+          await db.execute(
+              'CREATE TABLE `Translation` (`idTranslate` integer,`Lang` text,`Trans` text,  PRIMARY KEY (Trans))');
         }, readOnly: false
     );
   }
 
 
+  GoogleTranslator translator;
 
   var lock = new Lock();
 
-  GoogleTranslator translator;
   Future<String> getTranslation(String from, String locale) async {
+    return await lock.synchronized(() async {
 
+      print(from);
+      var test = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans='" + from + "' LIMIT 1) AND Lang='" + locale + "'"));
+      String to = test.isNotEmpty ? test[0]["Trans"] : null;
+      if (to == null) {
+        to = await translator.translate(from, to: locale);
 
-    String a=await lock.synchronized(() async {
-
-      var test=(await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans='"+from+"' LIMIT 1) AND Lang='"+locale+"'"));
-      String to= test.isNotEmpty?test[0]["Trans"]:null;
-      if(to==null){
-        to=await translator.translate(from, to: locale);
-        try{
+        try {
           db.insert("Translation", {
-            "idTranslate":(await db.rawQuery("SELECT COUNT(*) as Conto FROM Translation"))[0]["Conto"],
-            "Lang":"NAN",
-            "Trans":from,
+            "idTranslate": (await db.rawQuery(
+                "SELECT ifnull(MAX(idTranslate),0)+1 as Conto FROM Translation"))[0]["Conto"],
+            "Lang": "NAN",
+            "Trans": from,
           });
-        }catch(e){
+        } catch (e) {
 
         }
-        try{
+        try {
           db.insert("Translation", {
-            "idTranslate":(await db.rawQuery("SELECT idTranslate FROM Translation WHERE Trans='"+from+"' AND Lang='NAN'"))[0]["idTranslate"],
-            "Lang":locale,
-            "Trans":to,
+            "idTranslate": (await db.rawQuery(
+                "SELECT idTranslate FROM Translation WHERE Trans='" + from +
+                    "' AND Lang='NAN'"))[0]["idTranslate"],
+            "Lang": locale,
+            "Trans": to,
           });
-        }catch(e){
+        } catch (e) {
 
         }
-        try{
+        try {
           db.update("Translation", {
-            "Lang":locale,
-          }, where: "Trans='"+to+"' AND Lang='NAN'");
-        }catch(e){
+            "Lang": locale,
+          }, where: "Trans='" + to + "' AND Lang='NAN'");
+        } catch (e) {
 
         }
-
       }
+
+
+      print(to);
+      print(await db.rawQuery("SELECT * FROM Translation"));
       return to;
     });
 
-    return a;
-
   }
-
 }
-
-
-
 
 
 class TextAutoLocal extends StatefulWidget {
@@ -111,6 +114,7 @@ class _TextAutoLocalState extends State<TextAutoLocal> {
 
 
   translate() async {
+
     trans=await translateText(widget.text.data);
     setState(() {
 
@@ -142,6 +146,7 @@ class _TextAutoLocalState extends State<TextAutoLocal> {
 Future<String> translateText(String a,{String language=null}) async {
   await _DatabaseManager().initDatabase();
   String locale = await Devicelocale.currentLocale;
-  return _DatabaseManager().getTranslation(a, language??locale.split("_")[1].toLowerCase());
+    return _DatabaseManager().getTranslation(a, language??locale.split("_")[1].toLowerCase());
+
 
 }
