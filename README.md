@@ -16,8 +16,8 @@ TextAutoLocal(Text("Plugin example app"))
 
 
 
-Wrap your String with this (Need to be async):
+Convert your String with this (Need to be async):
 ```dart
 // Binary data
-String x=translateText("hello")
+String x= await translateText("hello");
 ```
