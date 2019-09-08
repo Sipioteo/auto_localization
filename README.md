@@ -10,7 +10,6 @@ This plugin will AUTOMATICALLY detect the app Localization and translate the tex
 
 Wrap your Text widget with this:
 ```dart
-// Binary data
 TextAutoLocal(Text("Plugin example app"))
 ```
 
@@ -18,6 +17,5 @@ TextAutoLocal(Text("Plugin example app"))
 
 Convert your String with this (Need to be async):
 ```dart
-// Binary data
 String x= await translateText("hello");
 ```
