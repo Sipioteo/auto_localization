@@ -48,15 +48,18 @@ class _DatabaseManager {
 
 
   Future<String> getTranslation(String from, String locale, {String target}) async {
-    return await lock.synchronized(() async {
-
-      var test = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans=? LIMIT 1) AND Lang=?",[from, locale]).catchError((Object error){
-
-      }));
-      String to = test.isNotEmpty ? test[0]["Trans"] : null;
-      if (to == null) {
 
 
+    var test = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans=? LIMIT 1) AND Lang=?",[from, locale]).catchError((Object error){
+
+    }));
+    String toSendOut = test.isNotEmpty ? test[0]["Trans"] : null;
+    if (toSendOut == null) {
+      toSendOut= await lock.synchronized(() async {
+
+
+
+        String to="";
 
         if(target!=null){
           to = (await translator.translate(from+"("+target+")", to: locale));
@@ -99,10 +102,12 @@ class _DatabaseManager {
             whereArgs: [to]).catchError((Object error){
 
         });
-      }
 
       return to;
     });
+    }
+
+    return toSendOut;
 
   }
 }
