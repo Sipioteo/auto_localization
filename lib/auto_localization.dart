@@ -25,7 +25,6 @@ class _DatabaseManager {
 
   initDatabase() async {
     translator = new GoogleTranslator();
-    deleteDatabase('translation.db');
 
     db = await openDatabase('translation.db', version: 1,
         onCreate: (Database db, int version) async {
