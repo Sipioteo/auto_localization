@@ -59,9 +59,18 @@ class _DatabaseManager {
 
 
         if(target!=null){
-          to = (await translator.translate(from+"("+target+")", to: locale)).replaceAll(RegExp(r'\([^)]*\)'), "").replaceAll(RegExp(r'/^\s+|\s+$/g'), "");
+          to = (await translator.translate(from+"("+target+")", to: locale));
+          if(to==null){
+            to=await translator.translate(from, to: locale);
+          }else{
+            to = to.replaceAll(RegExp(r'\([^)]*\)'), "").replaceAll(RegExp(r'/^\s+|\s+$/g'), "");
+          }
         }else{
           to = await translator.translate(from, to: locale);
+        }
+
+        if(to==null||to==""){
+          return from;
         }
 
         await db.insert("Translation", {
