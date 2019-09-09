@@ -41,10 +41,10 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: TextAutoLocal(Text("Plugin example app")),
+          title: TextLocal(Text("Plugin example app")),
         ),
         body: Center(
-          child: TextAutoLocal(Text('Running on: $_platformVersion\n')),
+          child: TextLocal(Text('Running on: $_platformVersion\n')),
         ),
       ),
     );

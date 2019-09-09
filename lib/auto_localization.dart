@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:devicelocale/devicelocale.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sqflite/sqflite.dart';
@@ -135,20 +136,19 @@ class _DatabaseManager {
 }
 
 
-class TextAutoLocal extends StatefulWidget {
+class AutoSizeTextLocal extends StatefulWidget {
 
-  final Text text;
+  final AutoSizeText text;
   final String target;
   final String lang;
 
-  TextAutoLocal(this.text,{this.lang,this.target});
-
+  AutoSizeTextLocal(this.text,{this.lang,this.target});
 
   @override
-  _TextAutoLocalState createState() => _TextAutoLocalState();
+  _AutoSizeTextLocalState createState() => _AutoSizeTextLocalState();
 }
 
-class _TextAutoLocalState extends State<TextAutoLocal> {
+class _AutoSizeTextLocalState extends State<AutoSizeTextLocal> {
 
   String trans;
 
@@ -160,8 +160,70 @@ class _TextAutoLocalState extends State<TextAutoLocal> {
 
   translate() async {
     trans=await translateText(widget.text.data, language: widget.lang, target: widget.target);
-    setState(() {
-    });
+    if(mounted){
+      setState(() {
+      });
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return AutoSizeText(
+      trans??widget.text.data,
+      strutStyle: widget.text.strutStyle,
+      style: widget.text.style,
+      softWrap: widget.text.softWrap,
+      semanticsLabel: widget.text.semanticsLabel,
+      textScaleFactor: widget.text.textScaleFactor,
+      maxLines: widget.text.maxLines,
+      textDirection: widget.text.textDirection,
+      overflow: widget.text.overflow,
+      locale: widget.text.locale,
+      textAlign: widget.text.textAlign,
+      key: widget.text.key,
+      textKey: widget.text.key,
+      stepGranularity: widget.text.stepGranularity,
+      minFontSize: widget.text.minFontSize,
+      maxFontSize: widget.text.maxFontSize,
+      wrapWords: widget.text.wrapWords,
+      presetFontSizes: widget.text.presetFontSizes,
+      group: widget.text.group,
+      overflowReplacement: widget.text.overflowReplacement,
+    );
+  }
+}
+
+
+
+
+class TextLocal extends StatefulWidget {
+  final Text text;
+  final String target;
+  final String lang;
+
+  TextLocal(this.text,{this.lang,this.target});
+
+  @override
+  _TextLocalState createState() => _TextLocalState();
+}
+
+class _TextLocalState extends State<TextLocal> {
+
+  String trans;
+
+  @override
+  void initState() {
+    super.initState();
+    translate();
+  }
+
+  translate() async {
+    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target);
+    if(mounted){
+      setState(() {
+      });
+    }
   }
 
   @override
@@ -182,6 +244,7 @@ class _TextAutoLocalState extends State<TextAutoLocal> {
       key: widget.text.key,
     );
   }
+
 }
 
 
@@ -189,7 +252,7 @@ class _TextAutoLocalState extends State<TextAutoLocal> {
 Future<String> translateText(String a,{String language, String target}) async {
   await _DatabaseManager().initDatabase();
   String locale = await Devicelocale.currentLocale;
-  return _DatabaseManager().getTranslation(a, language??locale.split("_")[1].toLowerCase(), target: target);
+  return _DatabaseManager().getTranslation(a, language??locale.split("_")[0].toLowerCase(), target: target);
 
 
 }
