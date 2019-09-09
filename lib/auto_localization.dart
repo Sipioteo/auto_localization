@@ -34,10 +34,10 @@ class _DatabaseManager {
     }
 
     db = await openDatabase('translation_02.db', version: 1,
-        onCreate: (Database db, int version) async {
-          await db.execute(
-              'CREATE TABLE `Translation` (`idTranslate` integer,`Lang` text,`Trans` text,  PRIMARY KEY (Trans))');
-        }, readOnly: false
+      onCreate: (Database db, int version) async {
+        await db.execute(
+            'CREATE TABLE `Translation` (`idTranslate` integer,`Lang` text,`Trans` text,  PRIMARY KEY (Trans))');
+      }, readOnly: false,
     );
   }
 
@@ -50,7 +50,9 @@ class _DatabaseManager {
   Future<String> getTranslation(String from, String locale, {String target}) async {
     return await lock.synchronized(() async {
 
-      var test = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans=? LIMIT 1) AND Lang=?",[from, locale]));
+      var test = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans=? LIMIT 1) AND Lang=?",[from, locale]).catchError((Object error){
+
+      }));
       String to = test.isNotEmpty ? test[0]["Trans"] : null;
       if (to == null) {
 
@@ -62,33 +64,32 @@ class _DatabaseManager {
           to = await translator.translate(from, to: locale);
         }
 
-        try {
-          db.insert("Translation", {
-            "idTranslate": (await db.rawQuery(
-                "SELECT ifnull(MAX(idTranslate),0)+1 as Conto FROM Translation"))[0]["Conto"],
-            "Lang": "NAN",
-            "Trans": from,
-          });
-        } on DatabaseException catch (e){
+        await db.insert("Translation", {
+          "idTranslate": (await db.rawQuery(
+              "SELECT ifnull(MAX(idTranslate),0)+1 as Conto FROM Translation"))[0]["Conto"],
+          "Lang": "NAN",
+          "Trans": from,
+        }).catchError((Object error){
 
-        }
-        try {
-          db.insert("Translation", {
-            "idTranslate": (await db.rawQuery(
-                "SELECT idTranslate FROM Translation WHERE Trans=? AND Lang='NAN'",[from]))[0]["idTranslate"],
-            "Lang": locale,
-            "Trans": to,
-          });
-        } on DatabaseException catch (e){
+        });
 
-        }
-        try {
-          db.update("Translation", {
-            "Lang": locale,
-          }, where: "Trans=? AND Lang='NAN'", whereArgs: [to]);
-        } on DatabaseException catch (e){
 
-        }
+        await db.insert("Translation", {
+          "idTranslate": (await db.rawQuery(
+              "SELECT idTranslate FROM Translation WHERE Trans=? AND Lang='NAN'",[from]))[0]["idTranslate"],
+          "Lang": locale,
+          "Trans": to,
+        }).catchError((Object error){
+
+        });
+
+
+        await db.update("Translation", {
+          "Lang": locale,
+        }, where: "Trans=? AND Lang='NAN'",
+            whereArgs: [to]).catchError((Object error){
+
+        });
       }
 
       return to;
