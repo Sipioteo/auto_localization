@@ -26,7 +26,11 @@ class _DatabaseManager {
   initDatabase() async {
     translator = new GoogleTranslator();
 
-    db = await openDatabase('translation.db', version: 1,
+    if(await databaseExists('translation.db')){
+      await deleteDatabase('translation.db');
+    }
+
+    db = await openDatabase('translation_01.db', version: 1,
         onCreate: (Database db, int version) async {
           await db.execute(
               'CREATE TABLE `Translation` (`idTranslate` integer,`Lang` text,`Trans` text,  PRIMARY KEY (Trans))');
@@ -39,14 +43,21 @@ class _DatabaseManager {
 
   var lock = new Lock();
 
-  Future<String> getTranslation(String from, String locale) async {
+
+  Future<String> getTranslation(String from, String locale, {String target}) async {
     return await lock.synchronized(() async {
 
-      print(from);
-      var test = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans='" + from + "' LIMIT 1) AND Lang='" + locale + "'"));
+      var test = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans=? LIMIT 1) AND Lang=?",[from, locale]));
       String to = test.isNotEmpty ? test[0]["Trans"] : null;
       if (to == null) {
-        to = await translator.translate(from, to: locale);
+
+
+
+        if(target!=null){
+          to = (await translator.translate(from+"("+target+")", to: locale)).replaceAll(RegExp(r'\([^)]*\)'), "").replaceAll(RegExp(r'/^\s+|\s+$/g'), "");
+        }else{
+          to = await translator.translate(from, to: locale);
+        }
 
         try {
           db.insert("Translation", {
@@ -61,8 +72,7 @@ class _DatabaseManager {
         try {
           db.insert("Translation", {
             "idTranslate": (await db.rawQuery(
-                "SELECT idTranslate FROM Translation WHERE Trans='" + from +
-                    "' AND Lang='NAN'"))[0]["idTranslate"],
+                "SELECT idTranslate FROM Translation WHERE Trans=? AND Lang='NAN'",[from]))[0]["idTranslate"],
             "Lang": locale,
             "Trans": to,
           });
@@ -72,15 +82,12 @@ class _DatabaseManager {
         try {
           db.update("Translation", {
             "Lang": locale,
-          }, where: "Trans='" + to + "' AND Lang='NAN'");
+          }, where: "Trans=? AND Lang='NAN'", whereArgs: [to]);
         } catch (e) {
 
         }
       }
 
-
-      print(to);
-      print(await db.rawQuery("SELECT * FROM Translation"));
       return to;
     });
 
@@ -90,10 +97,11 @@ class _DatabaseManager {
 
 class TextAutoLocal extends StatefulWidget {
 
-  Text text;
+  final Text text;
+  final String target;
+  final String lang;
 
-
-  TextAutoLocal(this.text);
+  TextAutoLocal(this.text,{this.lang,this.target});
 
 
   @override
@@ -106,17 +114,13 @@ class _TextAutoLocalState extends State<TextAutoLocal> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     translate();
   }
 
-
   translate() async {
-
-    trans=await translateText(widget.text.data);
+    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target);
     setState(() {
-
     });
   }
 
@@ -142,10 +146,10 @@ class _TextAutoLocalState extends State<TextAutoLocal> {
 
 
 
-Future<String> translateText(String a,{String language=null}) async {
+Future<String> translateText(String a,{String language, String target}) async {
   await _DatabaseManager().initDatabase();
   String locale = await Devicelocale.currentLocale;
-    return _DatabaseManager().getTranslation(a, language??locale.split("_")[1].toLowerCase());
+  return _DatabaseManager().getTranslation(a, language??locale.split("_")[1].toLowerCase(), target: target);
 
 
 }

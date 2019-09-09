@@ -1,3 +1,4 @@
-## 0.0.4
+## 0.1.0
 
-* TODO: Describe initial release.
+* Created a system to TARGET the translation
+* Optimized SQL query
