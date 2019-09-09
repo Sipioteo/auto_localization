@@ -29,8 +29,11 @@ class _DatabaseManager {
     if(await databaseExists('translation.db')){
       await deleteDatabase('translation.db');
     }
+    if(await databaseExists('translation_01.db')){
+      await deleteDatabase('translation_01.db');
+    }
 
-    db = await openDatabase('translation_01.db', version: 1,
+    db = await openDatabase('translation_02.db', version: 1,
         onCreate: (Database db, int version) async {
           await db.execute(
               'CREATE TABLE `Translation` (`idTranslate` integer,`Lang` text,`Trans` text,  PRIMARY KEY (Trans))');
@@ -66,7 +69,7 @@ class _DatabaseManager {
             "Lang": "NAN",
             "Trans": from,
           });
-        } catch (e) {
+        } on DatabaseException catch (e){
 
         }
         try {
@@ -76,14 +79,14 @@ class _DatabaseManager {
             "Lang": locale,
             "Trans": to,
           });
-        } catch (e) {
+        } on DatabaseException catch (e){
 
         }
         try {
           db.update("Translation", {
             "Lang": locale,
           }, where: "Trans=? AND Lang='NAN'", whereArgs: [to]);
-        } catch (e) {
+        } on DatabaseException catch (e){
 
         }
       }
