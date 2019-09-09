@@ -58,51 +58,73 @@ class _DatabaseManager {
       toSendOut= await lock.synchronized(() async {
 
 
+        var test1 = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans=? LIMIT 1) AND Lang=?",[from, locale]).catchError((Object error){
 
-        String to="";
+        }));
+        String to= test1.isNotEmpty ? test1[0]["Trans"] : null;
 
-        if(target!=null){
-          to = (await translator.translate(from+"("+target+")", to: locale));
-          if(to==null){
-            to=await translator.translate(from, to: locale);
-          }else{
-            to = to.replaceAll(RegExp(r'\([^)]*\)'), "").replaceAll(RegExp(r'/^\s+|\s+$/g'), "");
+
+
+        if (to == null) {
+          if (target != null) {
+            to =
+            (await translator.translate(from + "(" + target + ")", to: locale));
+            if (to == null) {
+              to = await translator.translate(from, to: locale);
+            } else {
+              to = to.replaceAll(RegExp(r'\([^)]*\)'), "").replaceAll(
+                  RegExp(r'/^\s+|\s+$/g'), "");
+            }
+          } else {
+            to = await translator.translate(from, to: locale);
           }
-        }else{
-          to = await translator.translate(from, to: locale);
+
+
+          if (to == null || to == "") {
+            return from;
+          }
+
+
+          try {
+            await db.insert("Translation", {
+              "idTranslate": (await db.rawQuery(
+                  "SELECT ifnull(MAX(idTranslate),0)+1 as Conto FROM Translation"))[0]["Conto"],
+              "Lang": "NAN",
+              "Trans": from,
+            }).catchError((Object error) {
+
+            });
+          } catch (e) {
+
+          }
+
+
+          try {
+            await db.insert("Translation", {
+              "idTranslate": (await db.rawQuery(
+                  "SELECT idTranslate FROM Translation WHERE Trans=? AND Lang='NAN'",
+                  [from]))[0]["idTranslate"],
+              "Lang": locale,
+              "Trans": to,
+            }).catchError((Object error) {
+
+            });
+          } catch (e) {
+
+          }
+
+
+          try {
+            await db.update("Translation", {
+              "Lang": locale,
+            }, where: "Trans=? AND Lang='NAN'", whereArgs: [to]
+            ).catchError((Object error) {
+
+            });
+          } catch (e) {
+
+          }
         }
-
-        if(to==null||to==""){
-          return from;
-        }
-
-        await db.insert("Translation", {
-          "idTranslate": (await db.rawQuery(
-              "SELECT ifnull(MAX(idTranslate),0)+1 as Conto FROM Translation"))[0]["Conto"],
-          "Lang": "NAN",
-          "Trans": from,
-        }).catchError((Object error){
-
-        });
-
-
-        await db.insert("Translation", {
-          "idTranslate": (await db.rawQuery(
-              "SELECT idTranslate FROM Translation WHERE Trans=? AND Lang='NAN'",[from]))[0]["idTranslate"],
-          "Lang": locale,
-          "Trans": to,
-        }).catchError((Object error){
-
-        });
-
-
-        await db.update("Translation", {
-          "Lang": locale,
-        }, where: "Trans=? AND Lang='NAN'",
-            whereArgs: [to]).catchError((Object error){
-
-        });
-
       return to;
     });
     }
