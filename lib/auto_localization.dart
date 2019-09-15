@@ -162,10 +162,11 @@ class _DatabaseManager {
 class AutoSizeTextLocal extends StatefulWidget {
 
   final AutoSizeText text;
-  final String target;
   final String lang;
+  final String target;
+  final bool alwaysTranslate;
 
-  AutoSizeTextLocal(this.text,{this.lang,this.target});
+  AutoSizeTextLocal(this.text,{this.lang,this.target, this.alwaysTranslate=false});
 
   @override
   _AutoSizeTextLocalState createState() => _AutoSizeTextLocalState();
@@ -185,7 +186,7 @@ class _AutoSizeTextLocalState extends State<AutoSizeTextLocal> {
   String cachedString="";
   translate() async {
     cachedString=widget.text.data;
-    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target);
+    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target, alwaysTranslate: widget.alwaysTranslate);
     if(mounted){
       setState(() {
       });
@@ -230,8 +231,9 @@ class TextLocal extends StatefulWidget {
   final Text text;
   final String target;
   final String lang;
+  final bool alwaysTranslate;
 
-  TextLocal(this.text,{this.lang,this.target});
+  TextLocal(this.text,{this.lang,this.target, this.alwaysTranslate=false});
 
   @override
   _TextLocalState createState() => _TextLocalState();
@@ -249,7 +251,7 @@ class _TextLocalState extends State<TextLocal> {
   String cachedString="";
   translate() async {
     cachedString=widget.text.data;
-    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target);
+    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target, alwaysTranslate: widget.alwaysTranslate);
     if(mounted){
       setState(() {
       });
@@ -282,11 +284,11 @@ class _TextLocalState extends State<TextLocal> {
 
 
 
-Future<String> translateText(String a,{String language, String target}) async {
+Future<String> translateText(String a,{String language, String target, bool alwaysTranslate=false}) async {
   await _DatabaseManager().initDatabase();
 
   String locale = await Devicelocale.currentLocale;
-  if(locale!=BaseLanguage().lang){
+  if(locale!=BaseLanguage().lang||alwaysTranslate){
     return _DatabaseManager().getTranslation(a, language??locale.split("_")[0].toLowerCase(), target: target);
   }else{
     return a;

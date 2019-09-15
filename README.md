@@ -21,8 +21,8 @@ language | The end language of the text (if null will be taken the default of th
 target | The argument of the translation (We added this because in certain circumstances translation were not accurate, 
 i.e. 
 ```dart
-translateText("Bailey's irish cream", language: "it"); //--> Result in "La crema irlandese di Bailey" which is wrong
-translateText("Bailey's irish cream", language: "it", target: "cocktail"); //--> Result in "Bailey's irish cream" which is correct
+translateText("Bailey's irish cream", language: "it", alwaysTranslate: true) //--> Result in "La crema irlandese di Bailey" which is wrong
+translateText("Bailey's irish cream", language: "it", target: "cocktail", alwaysTranslate: true) //--> Result in "Bailey's irish cream" which is correct
 ```
 )
 
@@ -34,21 +34,31 @@ Set base language into your main to not translate the text when the language is 
 BaseLanguage().setBaseLanguage("en")
 ```
 
+When you create an element you can set alwaysTranslate = TRUE and it will be translated event if the app language and device language matches, it's used to translate dynamic text, like something written by a user.
+```dart
+translateText("Bailey's irish cream", language: "it", target: "cocktail", alwaysTranslate: true)
+```
+
+
+
 
 Wrap your Text widget with this:
 ```dart
 TextLocal(Text("Plugin example app"))
+AutoSizeTextLocal(AutoSizeTextLocal("Plugin example app"))
 ```
 
 
 If you need to create your own Translated widget you could act like this
 ```dart
+
 class TextLocal extends StatefulWidget {
   final Text text;
   final String target;
   final String lang;
+  final bool alwaysTranslate;
 
-  TextLocal(this.text,{this.lang,this.target});
+  TextLocal(this.text,{this.lang,this.target, this.alwaysTranslate=false});
 
   @override
   _TextLocalState createState() => _TextLocalState();
@@ -66,7 +76,7 @@ class _TextLocalState extends State<TextLocal> {
   String cachedString="";
   translate() async {
     cachedString=widget.text.data;
-    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target);
+    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target, alwaysTranslate: widget.alwaysTranslate);
     if(mounted){
       setState(() {
       });
