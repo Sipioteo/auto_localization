@@ -288,6 +288,8 @@ Future<String> translateText(String a,{String language, String target}) async {
   String locale = await Devicelocale.currentLocale;
   if(locale!=BaseLanguage().lang){
     return _DatabaseManager().getTranslation(a, language??locale.split("_")[0].toLowerCase(), target: target);
+  }else{
+    return a;
   }
 
 
