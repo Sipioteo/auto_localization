@@ -29,47 +29,55 @@ translateText("Bailey's irish cream", language: "it", target: "cocktail"); //-->
 
 ## HOW TO USE
 
+Set base language into your main to not translate the text when the language is the same to which you write your app:
+```dart
+BaseLanguage().setBaseLanguage("en")
+```
+
+
 Wrap your Text widget with this:
 ```dart
-TextAutoLocal(Text("Plugin example app"))
+TextLocal(Text("Plugin example app"))
 ```
 
 
 If you need to create your own Translated widget you could act like this
 ```dart
-class TextAutoLocal extends StatefulWidget {
+class TextLocal extends StatefulWidget {
+  final Text text;
+  final String target;
+  final String lang;
 
-  final Text text; //This is the widget to wrap
-  final String target;  //this is the target
-  final String lang; //this is the translation
-
-  TextAutoLocal(this.text,{this.lang,this.target});
-
+  TextLocal(this.text,{this.lang,this.target});
 
   @override
-  _TextAutoLocalState createState() => _TextAutoLocalState();
+  _TextLocalState createState() => _TextLocalState();
 }
 
-class _TextAutoLocalState extends State<TextAutoLocal> {
+class _TextLocalState extends State<TextLocal> {
 
-  String trans; //this is the translation variable
+  String trans;
 
   @override
   void initState() {
     super.initState();
-    translate();
   }
 
+  String cachedString="";
   translate() async {
-    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target); //call this to create the translation
-    setState(() {
-    });
+    cachedString=widget.text.data;
+    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target);
+    if(mounted){
+      setState(() {
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    
-    //Rebuild all the widget with a new one but with different text
+    if(cachedString!=widget.text.data){
+      translate();
+    }
     return Text(
       trans??widget.text.data,
       strutStyle: widget.text.strutStyle,
@@ -86,6 +94,7 @@ class _TextAutoLocalState extends State<TextAutoLocal> {
       key: widget.text.key,
     );
   }
+
 }
 ```
 

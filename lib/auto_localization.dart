@@ -8,6 +8,29 @@ import 'package:synchronized/synchronized.dart';
 import 'package:translator/translator.dart';
 
 
+class BaseLanguage{
+
+  static final BaseLanguage _singleton = new BaseLanguage._internal();
+
+
+  factory BaseLanguage() {
+    return _singleton;
+  }
+
+  BaseLanguage._internal();
+
+  String _base="";
+
+  void setBaseLanguage(String lang){
+    _base=lang;
+  }
+
+
+  String get lang =>_base;
+
+
+
+}
 
 class _DatabaseManager {
 
@@ -155,10 +178,13 @@ class _AutoSizeTextLocalState extends State<AutoSizeTextLocal> {
   @override
   void initState() {
     super.initState();
-    translate();
+
   }
 
+
+  String cachedString="";
   translate() async {
+    cachedString=widget.text.data;
     trans=await translateText(widget.text.data, language: widget.lang, target: widget.target);
     if(mounted){
       setState(() {
@@ -169,6 +195,9 @@ class _AutoSizeTextLocalState extends State<AutoSizeTextLocal> {
 
   @override
   Widget build(BuildContext context) {
+    if(cachedString!=widget.text.data){
+      translate();
+    }
     return AutoSizeText(
       trans??widget.text.data,
       strutStyle: widget.text.strutStyle,
@@ -215,10 +244,11 @@ class _TextLocalState extends State<TextLocal> {
   @override
   void initState() {
     super.initState();
-    translate();
   }
 
+  String cachedString="";
   translate() async {
+    cachedString=widget.text.data;
     trans=await translateText(widget.text.data, language: widget.lang, target: widget.target);
     if(mounted){
       setState(() {
@@ -228,6 +258,9 @@ class _TextLocalState extends State<TextLocal> {
 
   @override
   Widget build(BuildContext context) {
+    if(cachedString!=widget.text.data){
+      translate();
+    }
     return Text(
       trans??widget.text.data,
       strutStyle: widget.text.strutStyle,
@@ -251,8 +284,11 @@ class _TextLocalState extends State<TextLocal> {
 
 Future<String> translateText(String a,{String language, String target}) async {
   await _DatabaseManager().initDatabase();
+
   String locale = await Devicelocale.currentLocale;
-  return _DatabaseManager().getTranslation(a, language??locale.split("_")[0].toLowerCase(), target: target);
+  if(locale!=BaseLanguage().lang){
+    return _DatabaseManager().getTranslation(a, language??locale.split("_")[0].toLowerCase(), target: target);
+  }
 
 
 }
