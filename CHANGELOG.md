@@ -1,4 +1,4 @@
-## 0.1.11
+## 0.1.12
 
 * Created a system to TARGET the translation
 * Optimized SQL query

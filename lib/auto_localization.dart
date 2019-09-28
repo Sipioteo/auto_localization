@@ -1,12 +1,12 @@
 import 'dart:async';
 
 import 'package:auto_size_text/auto_size_text.dart';
-import 'package:devicelocale/devicelocale.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:translator/translator.dart';
 
+import 'dart:ui' as ui;
 
 class BaseLanguage{
 
@@ -159,6 +159,9 @@ class _DatabaseManager {
 }
 
 
+
+
+
 class AutoSizeTextLocal extends StatefulWidget {
 
   final AutoSizeText text;
@@ -283,13 +286,13 @@ class _TextLocalState extends State<TextLocal> {
 }
 
 
-
 Future<String> translateText(String a,{String language, String target, bool alwaysTranslate=false}) async {
   await _DatabaseManager().initDatabase();
 
-  String locale = await Devicelocale.currentLocale;
+  String locale = ui.window.locale.languageCode;
+
   if(locale!=BaseLanguage().lang||alwaysTranslate){
-    return _DatabaseManager().getTranslation(a, language??locale.split("_")[0].toLowerCase(), target: target);
+    return _DatabaseManager().getTranslation(a, locale, target: target);
   }else{
     return a;
   }

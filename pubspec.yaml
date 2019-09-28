@@ -1,6 +1,6 @@
 name: auto_localization
 description: A way to automatically translate all your app to the phone Localization.
-version: 0.1.11
+version: 0.1.12
 author: Matteo Sipione<matteo@sipio.it>
 homepage: https://github.com/Sipioteo/auto_localization
 
@@ -11,7 +11,6 @@ dependencies:
   flutter:
     sdk: flutter
 
-  devicelocale: ^0.2.0
 
   auto_size_text: ^2.1.0
   translator: ^0.1.2
