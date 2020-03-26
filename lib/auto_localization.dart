@@ -289,7 +289,7 @@ class _TextLocalState extends State<TextLocal> {
 Future<String> translateText(String a,{String language, String target, bool alwaysTranslate=false}) async {
   await _DatabaseManager().initDatabase();
 
-  String locale = ui.window.locale.languageCode;
+  String locale = language!=null ? language : ui.window.locale.languageCode;
 
   if(locale!=BaseLanguage().lang||alwaysTranslate){
     return _DatabaseManager().getTranslation(a, locale, target: target);
