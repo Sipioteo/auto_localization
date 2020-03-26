@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:synchronized/synchronized.dart';
@@ -31,6 +30,108 @@ class BaseLanguage{
 
 
 }
+
+
+
+
+Future<String> translateText(String a,{String language, String target, bool alwaysTranslate=false}) async {
+  await _DatabaseManager().initDatabase();
+
+  String locale = language!=null ? language : ui.window.locale.languageCode;
+
+  if(locale!=BaseLanguage().lang||alwaysTranslate){
+    return _DatabaseManager().getTranslation(a, locale, target: target);
+  }else{
+    return a;
+  }
+
+
+}
+
+
+
+// ignore: must_be_immutable
+class TranslateBuilder extends StatefulWidget {
+
+  final List<String> text;
+  final String target;
+  final String lang;
+  final bool alwaysTranslate;
+  Widget Function(List<String>, bool) builder;
+  List<String> _cache;
+  List<String> _trans;
+
+  TranslateBuilder(this.text,this.builder,{this.lang,this.target, this.alwaysTranslate=false}){
+    if(_cache==null||_trans.length!=text.length){
+      _cache=List.generate(text.length, (index) => "");
+    }
+    if(_trans==null||_trans.length!=text.length){
+      _trans=List.generate(text.length, (index) => "");
+    }
+
+  }
+
+  @override
+  _TranslateBuilderState createState() => _TranslateBuilderState();
+}
+
+class _TranslateBuilderState extends State<TranslateBuilder> {
+
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+
+  int isTranslated=-1;  //0 false, 1 true, -1 start
+
+  translate() async {
+    isTranslated=0;
+    for(int i=0;i<widget.text.length;i++) {
+      widget._cache[i]=widget.text[i];
+      widget._trans[i] = await translateText(
+          widget.text[i], language: widget.lang,
+          target: widget.target,
+          alwaysTranslate: widget.alwaysTranslate);
+    }
+    isTranslated=1;
+    if(mounted){
+      setState(() {
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if(isTranslated==-1||checkCache()){
+      widget._cache=List.generate(widget.text.length, (index) => "");
+      translate();
+    }
+
+
+
+    print(isTranslated);
+    if(isTranslated==1){
+      return widget.builder(widget._trans,true);
+    }else{
+      return widget.builder(widget.text,false);
+    }
+
+  }
+
+  bool checkCache(){
+    for(int i=0;i<widget.text.length;i++){
+      if(widget._cache[i]!=widget.text[i]){
+        return true;
+      }
+    }
+    return false;
+  }
+
+}
+
+
 
 class _DatabaseManager {
 
@@ -149,153 +250,11 @@ class _DatabaseManager {
 
           }
         }
-      return to;
-    });
+        return to;
+      });
     }
 
     return toSendOut;
 
   }
-}
-
-
-
-
-
-class AutoSizeTextLocal extends StatefulWidget {
-
-  final AutoSizeText text;
-  final String lang;
-  final String target;
-  final bool alwaysTranslate;
-
-  AutoSizeTextLocal(this.text,{this.lang,this.target, this.alwaysTranslate=false});
-
-  @override
-  _AutoSizeTextLocalState createState() => _AutoSizeTextLocalState();
-}
-
-class _AutoSizeTextLocalState extends State<AutoSizeTextLocal> {
-
-  String trans;
-
-  @override
-  void initState() {
-    super.initState();
-
-  }
-
-
-  String cachedString="";
-  translate() async {
-    cachedString=widget.text.data;
-    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target, alwaysTranslate: widget.alwaysTranslate);
-    if(mounted){
-      setState(() {
-      });
-    }
-  }
-
-
-  @override
-  Widget build(BuildContext context) {
-    if(cachedString!=widget.text.data){
-      translate();
-    }
-    return AutoSizeText(
-      trans??widget.text.data,
-      strutStyle: widget.text.strutStyle,
-      style: widget.text.style,
-      softWrap: widget.text.softWrap,
-      semanticsLabel: widget.text.semanticsLabel,
-      textScaleFactor: widget.text.textScaleFactor,
-      maxLines: widget.text.maxLines,
-      textDirection: widget.text.textDirection,
-      overflow: widget.text.overflow,
-      locale: widget.text.locale,
-      textAlign: widget.text.textAlign,
-      key: widget.text.key,
-      textKey: widget.text.key,
-      stepGranularity: widget.text.stepGranularity,
-      minFontSize: widget.text.minFontSize,
-      maxFontSize: widget.text.maxFontSize,
-      wrapWords: widget.text.wrapWords,
-      presetFontSizes: widget.text.presetFontSizes,
-      group: widget.text.group,
-      overflowReplacement: widget.text.overflowReplacement,
-    );
-  }
-}
-
-
-
-
-class TextLocal extends StatefulWidget {
-  final Text text;
-  final String target;
-  final String lang;
-  final bool alwaysTranslate;
-
-  TextLocal(this.text,{this.lang,this.target, this.alwaysTranslate=false});
-
-  @override
-  _TextLocalState createState() => _TextLocalState();
-}
-
-class _TextLocalState extends State<TextLocal> {
-
-  String trans;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  String cachedString="";
-  translate() async {
-    cachedString=widget.text.data;
-    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target, alwaysTranslate: widget.alwaysTranslate);
-    if(mounted){
-      setState(() {
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if(cachedString!=widget.text.data){
-      translate();
-    }
-    return Text(
-      trans??widget.text.data,
-      strutStyle: widget.text.strutStyle,
-      style: widget.text.style,
-      softWrap: widget.text.softWrap,
-      semanticsLabel: widget.text.semanticsLabel,
-      textScaleFactor: widget.text.textScaleFactor,
-      maxLines: widget.text.maxLines,
-      textWidthBasis: widget.text.textWidthBasis,
-      textDirection: widget.text.textDirection,
-      overflow: widget.text.overflow,
-      locale: widget.text.locale,
-      textAlign: widget.text.textAlign,
-      key: widget.text.key,
-    );
-  }
-
-}
-
-
-Future<String> translateText(String a,{String language, String target, bool alwaysTranslate=false}) async {
-  await _DatabaseManager().initDatabase();
-
-  String locale = language!=null ? language : ui.window.locale.languageCode;
-
-  if(locale!=BaseLanguage().lang||alwaysTranslate){
-    return _DatabaseManager().getTranslation(a, locale, target: target);
-  }else{
-    return a;
-  }
-
-
 }

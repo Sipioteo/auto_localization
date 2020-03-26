@@ -9,6 +9,7 @@ This plugin will AUTOMATICALLY detect the app Localization and translate the tex
 
 So the point was to find a way to convincely translate text in all the languages.
 To do that we create this system who seam to works really well.
+It Uses Google Translate
 
 There is even a cache system to make it faster.
 
@@ -42,71 +43,30 @@ translateText("Bailey's irish cream", language: "it", target: "cocktail", always
 
 
 
-Wrap your Text widget with this:
+The old version is replaced by this. You have to use our TranslateBuilder to make a translation, it gives you the translated String through a builder, it works with List so you can translate TextSpan.
+
+
 ```dart
-TextLocal(Text("Plugin example app"))
-AutoSizeTextLocal(AutoSizeTextLocal("Plugin example app"))
+TranslateBuilder(["Plugin example app"],(stringList, isTranslated){
+            return Text(stringList[0]);
+},)
 ```
 
 
-If you need to create your own Translated widget you could act like this
 ```dart
+TranslateBuilder(['hello auto', 'localization is','Running on: $_platformVersion\n'],(stringList, isTranslated){
+            return Text.rich(TextSpan(
+              children: [
+                TextSpan(text: stringList[0]+' '),
+                TextSpan(text: stringList[1]+' '),
+                TextSpan(text: stringList[2]),
 
-class TextLocal extends StatefulWidget {
-  final Text text;
-  final String target;
-  final String lang;
-  final bool alwaysTranslate;
-
-  TextLocal(this.text,{this.lang,this.target, this.alwaysTranslate=false});
-
-  @override
-  _TextLocalState createState() => _TextLocalState();
-}
-
-class _TextLocalState extends State<TextLocal> {
-
-  String trans;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  String cachedString="";
-  translate() async {
-    cachedString=widget.text.data;
-    trans=await translateText(widget.text.data, language: widget.lang, target: widget.target, alwaysTranslate: widget.alwaysTranslate);
-    if(mounted){
-      setState(() {
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if(cachedString!=widget.text.data){
-      translate();
-    }
-    return Text(
-      trans??widget.text.data,
-      strutStyle: widget.text.strutStyle,
-      style: widget.text.style,
-      softWrap: widget.text.softWrap,
-      semanticsLabel: widget.text.semanticsLabel,
-      textScaleFactor: widget.text.textScaleFactor,
-      maxLines: widget.text.maxLines,
-      textWidthBasis: widget.text.textWidthBasis,
-      textDirection: widget.text.textDirection,
-      overflow: widget.text.overflow,
-      locale: widget.text.locale,
-      textAlign: widget.text.textAlign,
-      key: widget.text.key,
-    );
-  }
-
-}
+              ]
+            ));
+})
 ```
+
+
 
 Convert your String with this (Need to be async):
 ```dart

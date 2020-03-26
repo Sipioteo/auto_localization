@@ -4,4 +4,5 @@
 * Optimized SQL query
 * Added base language
 * Fixed bug who stuck the text
-* Support for AutoSizeText
+* Fixed some bug
+* Removed support for AutoSizeText

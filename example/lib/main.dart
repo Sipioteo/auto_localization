@@ -4,7 +4,9 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:auto_localization/auto_localization.dart';
 
-void main() => runApp(MyApp());
+void main(){
+  runApp(MyApp());
+}
 
 class MyApp extends StatefulWidget {
   @override
@@ -41,10 +43,21 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: TextLocal(Text("Plugin example app")),
+          title: TranslateBuilder(["Plugin example app"],(stringList, isTranslated){
+            return Text(stringList[0]);
+          },),
         ),
         body: Center(
-          child: TextLocal(Text('Running on: $_platformVersion\n')),
+          child: TranslateBuilder(['hello auto', 'localization is','Running on: $_platformVersion\n'],(stringList, isTranslated){
+            return Text.rich(TextSpan(
+              children: [
+                TextSpan(text: stringList[0]+' '),
+                TextSpan(text: stringList[1]+' '),
+                TextSpan(text: stringList[2]),
+
+              ]
+            ));
+          }),
         ),
       ),
     );
