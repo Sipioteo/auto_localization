@@ -50,12 +50,12 @@ class _MyAppState extends State<MyApp> {
         body: Center(
           child: TranslateBuilder(['hello auto', 'localization is','Running on: $_platformVersion\n'],(stringList, isTranslated){
             return Text.rich(TextSpan(
-              children: [
-                TextSpan(text: stringList[0]+' '),
-                TextSpan(text: stringList[1]+' '),
-                TextSpan(text: stringList[2]),
+                children: [
+                  TextSpan(text: stringList[0]+' '),
+                  TextSpan(text: stringList[1]+' '),
+                  TextSpan(text: stringList[2]),
 
-              ]
+                ]
             ));
           }),
         ),
