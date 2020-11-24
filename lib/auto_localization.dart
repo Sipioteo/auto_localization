@@ -7,12 +7,7 @@ import 'package:translator/translator.dart';
 
 import 'dart:ui' as ui;
 
-import 'package:license/license.dart';
 
-void main() {
-  final licenseData = LicenseData(copyrightHolderName: 'John Brown');
-  print(mit(licenseData));
-}
 
 
 class BaseLanguage{
