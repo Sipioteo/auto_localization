@@ -193,15 +193,15 @@ class _DatabaseManager {
         if (to == null) {
           if (target != null) {
             to =
-            (await translator.translate(from + "(" + target + ")", to: locale));
+            (await translator.translate(from + "(" + target + ")", to: locale)).text;
             if (to == null) {
-              to = await translator.translate(from, to: locale);
+              to = (await translator.translate(from, to: locale)).text;
             } else {
               to = to.replaceAll(RegExp(r'\([^)]*\)'), "").replaceAll(
                   RegExp(r'/^\s+|\s+$/g'), "");
             }
           } else {
-            to = await translator.translate(from, to: locale);
+            to = (await translator.translate(from, to: locale)).text;
           }
 
 
