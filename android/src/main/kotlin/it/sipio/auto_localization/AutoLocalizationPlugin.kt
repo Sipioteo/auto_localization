@@ -1,5 +1,5 @@
 package it.sipio.auto_localization
-
+import android.support.annotation.NonNull
 import androidx.annotation.NonNull;
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
