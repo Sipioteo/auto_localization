@@ -14,6 +14,13 @@ It Uses Google Translate
 
 ## Getting Started
 There is even a cache system to make it faster.
+Add the dependency in `pubspec.yaml`:
+```yaml
+dependencies:
+  ...
+  auto_localization: ^1.1.9
+```
+
 
 ## HOW TO USE
 
