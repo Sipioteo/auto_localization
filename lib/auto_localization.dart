@@ -9,38 +9,50 @@ import 'package:translator/translator.dart';
 
 
 class AutoLocalization{
-  static String boxName='auto_translation_box';
+  static final String _boxName='auto_translation_box';
   static final _translator = GoogleTranslator();
   static String _appLanguage="en";
   static String _userLanguage="it";
+
+  ///This parameter control the time between every request so you don't exceed the maximum amount of request. If you don't know what you are doing don't change it!
+  static int _delayTime=300;
+
+
   static List<Future> futures=[];
 
   ///INIT AUTOLOCALIZATION
-  static init({String? appLanguage, String? userLanguage}) async {
-    setAppLanguage(appLanguage??_appLanguage);
-    setUserLanguage(userLanguage??_userLanguage);
+  static init({String? appLanguage, String? userLanguage, int? delayTime}) async {
+    _appLanguage=appLanguage??_appLanguage;
+    _userLanguage=userLanguage??_userLanguage;
+    _delayTime=delayTime??_delayTime;
+
     try{
       await Hive.initFlutter();
     }catch(_){
       Hive.init('../');
     }
     Hive.registerAdapter(_SaveTranslationObjectAdapter());
-    await Hive.openBox<_SaveTranslationObject>(boxName);
+    await Hive.openBox<_SaveTranslationObject>(_boxName);
   }
 
   ///SET APP LANGUAGE
-  static setAppLanguage(String languageId){
-    _userLanguage=languageId;
+  static set setDelayTime(int delayTime){
+    _delayTime=delayTime;
+  }
+
+  ///SET APP LANGUAGE
+  static set setAppLanguage(String languageId){
+    _appLanguage=languageId;
   }
 
   ///SET USER LANGUAGE
-  static setUserLanguage(String languageId){
+  static set setUserLanguage(String languageId){
     _userLanguage=languageId;
   }
 
   static Future<String> _executeTranslate(String text, {bool cache=true, String? targetLanguage}) async {
     //CACHE CHECK
-    Box<_SaveTranslationObject> dbHive=Hive.box(boxName);
+    Box<_SaveTranslationObject> dbHive=Hive.box(_boxName);
     _SaveTranslationObject result=_SaveTranslationObject(
         appLanguage: _appLanguage,
         userLanguage: targetLanguage??_userLanguage,
@@ -53,6 +65,7 @@ class AutoLocalization{
       await _awaitTheWork();
       result.resultText=(await _translator.translate(text, from: _appLanguage, to: targetLanguage??_userLanguage)).text;
       dbHive.add(result);
+      await Future.delayed(Duration(milliseconds: _delayTime));
       return result.resultText!;
     }
 
@@ -151,9 +164,6 @@ class _SaveTranslationObject{
 
 }
 
-
-
-// Can be generated automatically
 class _SaveTranslationObjectAdapter extends TypeAdapter<_SaveTranslationObject> {
   @override
   final typeId = 0;
