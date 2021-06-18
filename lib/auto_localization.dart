@@ -1,263 +1,181 @@
-import 'dart:async';
-
-import 'package:flutter/widgets.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:synchronized/synchronized.dart';
+library auto_localization;
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:translator/translator.dart';
 
-import 'dart:ui' as ui;
 
 
 
+class AutoLocalization{
+  static String boxName='auto_translation_box';
+  static final _translator = GoogleTranslator();
+  static String _appLanguage="en";
+  static String _userLanguage="it";
+  static List<Future> futures=[];
 
-class BaseLanguage{
-
-  static final BaseLanguage _singleton = new BaseLanguage._internal();
-
-
-  factory BaseLanguage() {
-    return _singleton;
+  ///INIT AUTOLOCALIZATION
+  static init({String? appLanguage, String? userLanguage}) async {
+    setAppLanguage(appLanguage??_appLanguage);
+    setUserLanguage(userLanguage??_userLanguage);
+    try{
+      await Hive.initFlutter();
+    }catch(_){
+      Hive.init('../');
+    }
+    Hive.registerAdapter(_SaveTranslationObjectAdapter());
+    await Hive.openBox<_SaveTranslationObject>(boxName);
   }
 
-  BaseLanguage._internal();
-
-  String _base="";
-
-  void setBaseLanguage(String lang){
-    _base=lang;
+  ///SET APP LANGUAGE
+  static setAppLanguage(String languageId){
+    _userLanguage=languageId;
   }
 
+  ///SET USER LANGUAGE
+  static setUserLanguage(String languageId){
+    _userLanguage=languageId;
+  }
 
-  String get lang =>_base;
+  static Future<String> _executeTranslate(String text, {bool cache=true, String? targetLanguage}) async {
+    //CACHE CHECK
+    Box<_SaveTranslationObject> dbHive=Hive.box(boxName);
+    _SaveTranslationObject result=_SaveTranslationObject(
+        appLanguage: _appLanguage,
+        userLanguage: targetLanguage??_userLanguage,
+        startText: text
+    );
+    List<_SaveTranslationObject> search=dbHive.values.where((element) => element==result).toList();
 
+    //CACHE NOT FOUND
+    if(search.isEmpty&&cache){
+      await _awaitTheWork();
+      result.resultText=(await _translator.translate(text, from: _appLanguage, to: targetLanguage??_userLanguage)).text;
+      dbHive.add(result);
+      return result.resultText!;
+    }
 
+    //CACHE FOUND
+    return search.first.resultText!;
+  }
+
+  ///Execute an async translation
+  static Future<String> translate(String text, {bool cache=true, String? targetLanguage}) async {
+    Future ft=_executeTranslate(text, cache: cache, targetLanguage: targetLanguage);
+    futures.add(ft);
+    return await ft;
+  }
+
+  static Future<bool> _awaitTheWork() async {
+    List<Future> futureToWork=futures.toList();
+    if(futureToWork.isEmpty){
+      return true;
+    }
+    await Future.wait(futureToWork);
+    return true;
+  }
 
 }
 
 
 
-
-Future<String> translateText(String a,{String language, String target, bool alwaysTranslate=false}) async {
-  await _DatabaseManager().initDatabase();
-
-  String locale = language!=null ? language : ui.window.locale.languageCode;
-
-  if(locale!=BaseLanguage().lang||alwaysTranslate){
-    return _DatabaseManager().getTranslation(a, locale, target: target);
-  }else{
-    return a;
-  }
-
-
-}
-
-
-
-// ignore: must_be_immutable
-class TranslateBuilder extends StatefulWidget {
-
+class AutoLocalBuilder extends StatefulWidget {
+  final Widget Function(List<String> text, double percentage) builder;
   final List<String> text;
-  final String target;
-  final String lang;
-  final bool alwaysTranslate;
-  Widget Function(List<String>, bool) builder;
-  List<String> _cache;
-  List<String> _trans;
+  final cache;
 
-  TranslateBuilder(this.text,this.builder,{this.lang,this.target, this.alwaysTranslate=false}){
-    if(_cache==null||_trans.length!=text.length){
-      _cache=List.generate(text.length, (index) => "");
-    }
-    if(_trans==null||_trans.length!=text.length){
-      _trans=List.generate(text.length, (index) => "");
-    }
 
-  }
+  const AutoLocalBuilder({Key? key, required this.builder, this.text=const [], this.cache=true}) : super(key: key);
 
   @override
-  _TranslateBuilderState createState() => _TranslateBuilderState();
+  _AutoLocalBuilderState createState() => _AutoLocalBuilderState();
 }
 
-class _TranslateBuilderState extends State<TranslateBuilder> {
+class _AutoLocalBuilderState extends State<AutoLocalBuilder> {
 
+  List<String>? translation;
+  double percentage=0.0;
 
   @override
   void initState() {
+    translation=widget.text;
     super.initState();
+    start();
   }
 
-
-  int isTranslated=-1;  //0 false, 1 true, -1 start
-
-  translate() async {
-    isTranslated=0;
-    for(int i=0;i<widget.text.length;i++) {
-      widget._cache[i]=widget.text[i];
-      widget._trans[i] = await translateText(
-          widget.text[i], language: widget.lang,
-          target: widget.target,
-          alwaysTranslate: widget.alwaysTranslate);
-    }
-    isTranslated=1;
-    if(mounted){
+  void start() async {
+    for(int i=0; i<translation!.length;i++){
+      translation![i] = await AutoLocalization.translate(translation!.elementAt(i), cache: widget.cache);
       setState(() {
+        percentage=i/translation!.length;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if(isTranslated==-1||checkCache()){
-      widget._cache=List.generate(widget.text.length, (index) => "");
-      translate();
-    }
-
-
-
-    print(isTranslated);
-    if(isTranslated==1){
-      return widget.builder(widget._trans,true);
-    }else{
-      return widget.builder(widget.text,false);
-    }
-
+    return widget.builder(translation!, percentage);
   }
+}
 
-  bool checkCache(){
-    for(int i=0;i<widget.text.length;i++){
-      if(widget._cache[i]!=widget.text[i]){
-        return true;
-      }
+
+
+
+@HiveType(typeId: 6)
+class _SaveTranslationObject{
+  @HiveField(0)
+  final String appLanguage;
+  @HiveField(1)
+  final String userLanguage;
+  @HiveField(2)
+  final String startText;
+  @HiveField(3)
+  String? resultText;
+
+
+  _SaveTranslationObject({required this.appLanguage,required this.userLanguage,required this.startText, this.resultText});
+
+  @override
+  bool operator ==(Object other) {
+    if(other is _SaveTranslationObject){
+      return other.appLanguage==appLanguage&&
+          other.userLanguage==userLanguage&&
+          other.startText==startText;
     }
     return false;
   }
+
+  @override
+  int get hashCode => super.hashCode;
 
 }
 
 
 
-class _DatabaseManager {
+// Can be generated automatically
+class _SaveTranslationObjectAdapter extends TypeAdapter<_SaveTranslationObject> {
+  @override
+  final typeId = 0;
 
-
-  static final _DatabaseManager _singleton = new _DatabaseManager._internal();
-
-
-  Database db;
-
-  factory _DatabaseManager() {
-    return _singleton;
-  }
-
-  _DatabaseManager._internal();
-
-
-  initDatabase() async {
-    translator = new GoogleTranslator();
-
-    if(await databaseExists('translation.db')){
-      await deleteDatabase('translation.db');
-    }
-    if(await databaseExists('translation_01.db')){
-      await deleteDatabase('translation_01.db');
-    }
-
-    db = await openDatabase('translation_02.db', version: 1,
-      onCreate: (Database db, int version) async {
-        await db.execute(
-            'CREATE TABLE `Translation` (`idTranslate` integer,`Lang` text,`Trans` text,  PRIMARY KEY (Trans))');
-      }, readOnly: false,
+  @override
+  _SaveTranslationObject read(BinaryReader reader) {
+    var data=reader.read();
+    return _SaveTranslationObject(
+        appLanguage: data[0],
+        userLanguage: data[1],
+        startText: data[2],
+        resultText: data[3]
     );
   }
 
-
-  GoogleTranslator translator;
-
-  var lock = new Lock();
-
-
-  Future<String> getTranslation(String from, String locale, {String target}) async {
-
-
-    var test = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans=? LIMIT 1) AND Lang=?",[from, locale]).catchError((Object error){
-
-    }));
-    String toSendOut = test.isNotEmpty ? test[0]["Trans"] : null;
-    if (toSendOut == null) {
-      toSendOut= await lock.synchronized(() async {
-
-
-        var test1 = (await db.rawQuery("SELECT Trans FROM Translation WHERE idTranslate=(SELECT idTranslate FROM Translation WHERE Trans=? LIMIT 1) AND Lang=?",[from, locale]).catchError((Object error){
-
-        }));
-        String to= test1.isNotEmpty ? test1[0]["Trans"] : null;
-
-
-
-        if (to == null) {
-          if (target != null) {
-            to =
-            (await translator.translate(from + "(" + target + ")", to: locale)).text;
-            if (to == null) {
-              to = (await translator.translate(from, to: locale)).text;
-            } else {
-              to = to.replaceAll(RegExp(r'\([^)]*\)'), "").replaceAll(
-                  RegExp(r'/^\s+|\s+$/g'), "");
-            }
-          } else {
-            to = (await translator.translate(from, to: locale)).text;
-          }
-
-
-          if (to == null || to == "") {
-            return from;
-          }
-
-
-          try {
-            await db.insert("Translation", {
-              "idTranslate": (await db.rawQuery(
-                  "SELECT ifnull(MAX(idTranslate),0)+1 as Conto FROM Translation"))[0]["Conto"],
-              "Lang": "NAN",
-              "Trans": from,
-            }).catchError((Object error) {
-
-            });
-          } catch (e) {
-
-          }
-
-
-          try {
-            await db.insert("Translation", {
-              "idTranslate": (await db.rawQuery(
-                  "SELECT idTranslate FROM Translation WHERE Trans=? AND Lang='NAN'",
-                  [from]))[0]["idTranslate"],
-              "Lang": locale,
-              "Trans": to,
-            }).catchError((Object error) {
-
-            });
-          } catch (e) {
-
-          }
-
-
-          try {
-            await db.update("Translation", {
-              "Lang": locale,
-            }, where: "Trans=? AND Lang='NAN'", whereArgs: [to]
-            ).catchError((Object error) {
-
-            });
-          } catch (e) {
-
-          }
-        }
-        return to;
-      });
-    }
-
-    return toSendOut;
-
+  @override
+  void write(BinaryWriter writer, _SaveTranslationObject obj) {
+    writer.write([
+      obj.appLanguage,
+      obj.userLanguage,
+      obj.startText,
+      obj.resultText,
+    ]);
   }
 }

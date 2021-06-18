@@ -1,3 +1,3 @@
-## 1.1.6
+## 0.0.1
 
-* UPDATED DEPENDENCIES
+* TODO: Describe initial release.
