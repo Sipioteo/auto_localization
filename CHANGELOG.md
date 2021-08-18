@@ -1,5 +1,3 @@
-## 1.1.9
+## 1.2.0
 
-* NULLSAFETY
-* Fixed an init bug
-* Add a control hover delay time
+* Fixed dispose error

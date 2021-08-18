@@ -120,9 +120,11 @@ class _AutoLocalBuilderState extends State<AutoLocalBuilder> {
   void start() async {
     for(int i=0; i<translation!.length;i++){
       translation![i] = await AutoLocalization.translate(translation!.elementAt(i), cache: widget.cache);
-      setState(() {
-        percentage=i/translation!.length;
-      });
+      if(mounted){
+        setState(() {
+          percentage=i/translation!.length;
+        });
+      }
     }
   }
 

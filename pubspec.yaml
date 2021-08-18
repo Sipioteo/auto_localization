@@ -1,6 +1,6 @@
 name: auto_localization
 description: This is a project to automatically translate your app in any language.
-version: 1.1.9
+version: 1.2.0
 homepage: https://github.com/Sipioteo/auto_localization
 
 environment:
@@ -11,7 +11,7 @@ dependencies:
 
   translator: ^0.1.7
   hive: ^2.0.4
-  hive_flutter: ^1.0.0
+  hive_flutter: ^1.1.0
 
 
   flutter:
