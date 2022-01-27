@@ -1,3 +1,4 @@
-## 1.2.0
+## 2.0.0
 
-* Fixed dispose error
+* Fixed String Error
+* Fixed Null Safety

@@ -40,19 +40,11 @@ await AutoLocalization.translate("hello");
 Use the builder to translate widgets smoothly
 ```dart
 AutoLocalBuilder(
-  text : [
-    'hello', 
-    'how are you?',
-    'everything is fine',
-  ],
-  builder: (stringList, percentage){
-            return Text.rich(TextSpan(
-              children: [
-                TextSpan(text: stringList[0]+' '),
-                TextSpan(text: stringList[1]+' '),
-                TextSpan(text: stringList[2]),
-
-              ]
-            ));
-});
+  text: const ["ciao", "come stai?"],
+  builder: (TranslationWorker tw) {
+    print(tw.get('ciao'));
+    print(tw.get('come stai?'));
+    return Text(tw.get('ciao'),);
+  }, 
+);
 ```
