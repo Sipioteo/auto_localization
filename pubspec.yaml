@@ -1,6 +1,6 @@
 name: auto_localization
 description: This is a project to automatically translate your app in any language.
-version: 2.0.0
+version: 2.0.1
 homepage: https://github.com/Sipioteo/auto_localization
 
 environment:
