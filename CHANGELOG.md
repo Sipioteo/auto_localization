@@ -1,4 +1,3 @@
-## 2.0.1
+## 2.0.2
 
-* Fixed String Error
-* Fixed Null Safety
+* Fixed some warnings
