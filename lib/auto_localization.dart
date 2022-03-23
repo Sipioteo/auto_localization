@@ -121,7 +121,7 @@ class AutoLocalization {
         dbHive.values.where((element) => element == result).toList();
 
     //CACHE NOT FOUND
-    if (search == null || search.isEmpty || !cache) {
+    if (search.isEmpty || !cache) {
       result.resultText = (await _translator.translate(text,
               from: startingLanguage ?? _appLanguage,
               to: targetLanguage ?? _userLanguage))
@@ -245,7 +245,7 @@ class TranslationWorker extends ChangeNotifier {
   }
 
   run({useCache = false}) async {
-    if (_translated != null && _translated.isNotEmpty) {
+    if (_translated.isNotEmpty) {
       for (int i = 0; i < _translated.length; i++) {
         _translated[_translated.keys.elementAt(i)] =
             await AutoLocalization.translate(

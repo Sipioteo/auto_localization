@@ -18,7 +18,7 @@ Add the dependency in `pubspec.yaml`:
 ```yaml
 dependencies:
   ...
-  auto_localization: ^2.0.1
+  auto_localization: ^2.0.2
 ```
 
 
